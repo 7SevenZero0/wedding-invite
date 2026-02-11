@@ -13,8 +13,9 @@ document.querySelectorAll("[data-scroll-to]").forEach((trigger) => {
 
 // Плавное появление блоков при скролле
 const revealElements = document.querySelectorAll(".js-reveal");
+const timelineItems = document.querySelectorAll(".timeline-item");
 
-if ("IntersectionObserver" in window && revealElements.length > 0) {
+if ("IntersectionObserver" in window && (revealElements.length > 0 || timelineItems.length > 0)) {
   const observer = new IntersectionObserver(
     (entries, obs) => {
       entries.forEach((entry) => {
@@ -31,9 +32,46 @@ if ("IntersectionObserver" in window && revealElements.length > 0) {
   );
 
   revealElements.forEach((el) => observer.observe(el));
+
+  if (timelineItems.length > 0) {
+    const activeObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const item = entry.target;
+          if (!(item instanceof HTMLElement)) return;
+          if (entry.isIntersecting) {
+            item.classList.add("timeline-item--active");
+          } else {
+            item.classList.remove("timeline-item--active");
+          }
+        });
+      },
+      {
+        threshold: 0.5,
+        rootMargin: "-40px 0px -40px 0px",
+      }
+    );
+
+    timelineItems.forEach((item) => activeObserver.observe(item));
+  }
 } else {
   // запасной вариант для старых браузеров
   revealElements.forEach((el) => el.classList.add("js-reveal--visible"));
+}
+
+// Интерактив для "Нашей истории" — раскрытие деталей по клику/тачу
+if (timelineItems.length > 0) {
+  timelineItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const isExpanded = item.classList.contains("timeline-item--expanded");
+      // Сворачиваем остальные
+      timelineItems.forEach((el) => el.classList.remove("timeline-item--expanded"));
+      // Если этот уже был открыт, просто закрываем все; иначе открываем его
+      if (!isExpanded) {
+        item.classList.add("timeline-item--expanded");
+      }
+    });
+  });
 }
 
 // Обработка анкеты гостя
@@ -86,4 +124,6 @@ if (rsvpForm && rsvpResult) {
     rsvpResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 }
+
+// (Музыка была убрана по просьбе — логика не требуется)
 
